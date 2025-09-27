@@ -3,7 +3,7 @@
   "homepage": "https://host-app.netlify.app",
   "scripts": {
     "start": "webpack serve",
-    "build": "webpack --mode production",
+    "build": "webpack --env production",
     "predeploy": "npm run build",
     "deploy": "netlify deploy --prod --dir=dist"
   },
