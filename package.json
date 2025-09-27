@@ -1,9 +1,11 @@
 {
   "name": "host",
-  "version": "1.0.0",
+  "homepage": "https://host-app.netlify.app",
   "scripts": {
     "start": "webpack serve",
-    "build": "webpack --mode production"
+    "build": "webpack --mode production",
+    "predeploy": "npm run build",
+    "deploy": "netlify deploy --prod --dir=dist"
   },
   "dependencies": {
     "react": "^18.2.0",
@@ -19,6 +21,7 @@
     "webpack": "^5.88.0",
     "webpack-cli": "^5.1.4",
     "webpack-dev-server": "^5.0.0",
-    "html-webpack-plugin": "^5.5.0"
+    "html-webpack-plugin": "^5.5.0",
+    "netlify-cli": "^17.0.0"
   }
 }

@@ -7,7 +7,8 @@ module.exports = {
   mode: 'development',
   devServer: {
     port: 3000,
-    historyApiFallback: true,
+    headers: { 'Access-Control-Allow-Origin': '*' },
+    historyApiFallback: { index: '/index.html' },
     static: path.resolve(__dirname, 'public'),
   },
   output: {
