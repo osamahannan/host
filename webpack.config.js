@@ -12,7 +12,7 @@ module.exports = {
     static: path.resolve(__dirname, 'public'),
   },
   output: {
-    publicPath: 'auto',
+    publicPath: '/',
   },
   resolve: {
     extensions: ['.ts', '.tsx', '.js'],
