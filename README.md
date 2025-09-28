@@ -1,65 +1,66 @@
 Host App
-This repository contains the host application for a pluggable micro-frontend architecture using React (TypeScript) and Webpack Module Federation. It dynamically loads micro-frontends (auth, booking, reporting) at runtime from a config.json file, provides routing, and supports cross-app communication via custom events.
-Setup Instructions
+The Host App serves as the container for a micro-frontend architecture, orchestrating the integration of independently deployed micro-frontends (auth-app, booking-app, reporting-app) using Webpack Module Federation, React, and TypeScript.
+Repository
 
-Clone the repository:
-git clone <repository-url>
+GitHub: https://github.com/osamahannan/host
+
+Features
+
+Dynamic Module Loading: Loads micro-frontends via Webpack Module Federation with metadata from a self-registering plugin registry or a static config.json fallback.
+Self-Registration: Micro-frontends register themselves at runtime using the moduleRegister event, enabling dynamic module addition without host redeployment.
+Role-Based Access Control: Restricts routes based on user roles (user, admin), with admin accessing all routes and reporting-app restricted to admin.
+Session Management: Persists user role and login data in localStorage for seamless session handling.
+Netlify Deployment: Independently deployed with SPA routing and CORS headers for remoteEntry.js loading.
+
+Setup
+
+Clone the Repository:git clone https://github.com/osamahannan/host.git
 cd host
 
 
-Install dependencies:
-npm install
+Install Dependencies:npm install
 
 
-Start the development server:
-npm start
+Run Locally:npm start
 
-The app runs on http://localhost:3000.
 
-Ensure micro-frontends are running:
+Opens at http://localhost:3000.
+Requires auth-app (http://localhost:3001), booking-app (http://localhost:3002), and reporting-app (http://localhost:3003) to be running.
+Test routes: /auth/login, /auth/profile, /booking/list, /booking/form, /reporting/dashboard (admin-only).
 
-Auth app: http://localhost:3001
-Booking app: http://localhost:3002
-Reporting app: http://localhost:3003Update public/config.json with production URLs if deployed.
+
+Build for Production:npm run build
+
+
+Outputs to dist/.
+
+
+Deploy to Netlify:npm run deploy
+
+
+Deploys to https://micro-host-app.netlify.app.
 
 
 
 Architecture Decisions
 
-Webpack Module Federation: Used for dynamic module loading without hardcoding remotes. The host has no direct dependencies on remotes, relying on config.json.
-Dynamic Loading: Loads remoteEntry.js scripts at runtime using useDynamicScript hook, with fallback UI for unavailable modules.
-Routing: react-router-dom handles navigation, mapping routes to remote components based on config.
-Error Handling: Suspense and error boundaries display "Module unavailable" or "Load failed" if a remote fails to load.
-Role-Based Access: Routes check user roles against module permissions in config.json.
-TypeScript: Added src/types/module-federation.d.ts to declare Webpack globals (__webpack_init_sharing__, __webpack_share_scopes__) for type safety. Files with JSX use .tsx extension (e.g., index.tsx).
-React 18: Uses createRoot for rendering (in index.tsx).
+Webpack Module Federation: Chosen for its ability to load remote micro-frontends dynamically, enabling independent development and deployment. The host app consumes remoteEntry.js files from micro-frontends.
+TypeScript: Used for type safety, especially for shared interfaces (e.g., ModuleMetadata in shared-types.ts) and Webpack configurations.
+React with react-router-dom: Provides client-side routing for SPA behavior, with dynamic route generation based on module metadata.
+Role-Based Access Control: Implemented in App.tsx to restrict routes based on userRole state, updated via userLoggedIn events. admin role has full access, while user is limited to booking routes.
+SPA Routing Fix: Configured historyApiFallback in webpack.config.js to serve index.html for all routes, fixing 404 and MIME type errors locally. Netlify’s netlify.toml handles this in production.
+Dynamic Config: Uses config.json as a fallback for production stability, with self-registration via moduleRegister events for flexibility in development and future scalability.
 
 Communication Design
 
-Cross-App Communication: Uses custom events (userLoggedIn) dispatched on window to share user state (e.g., username, role). The host listens for these events to update the userRole state, controlling access to routes.
-Shared Dependencies: React, ReactDOM, and react-router-dom are shared as singletons to avoid duplication and ensure compatibility.
+Self-Registration via Events: Micro-frontends dispatch moduleRegister events on initialization, sending ModuleMetadata (name, URL, routes, components, permissions) to the host. The host’s App.tsx listens for these events to build the config state dynamically.
+Authentication Events: auth-app dispatches userLoggedIn (with username and role) and userLoggedOut events. The host listens to update userRole state and manage localStorage.
+Shared Dependencies: Module Federation shares react, react-dom, react-router-dom as singletons (singleton: true, eager: true) to ensure consistent versions and reduce bundle size.
+Cross-Origin Communication: Micro-frontends are loaded from different Netlify domains (e.g., https://micro-auth-app.netlify.app). CORS headers (Access-Control-Allow-Origin: *) in netlify.toml ensure remoteEntry.js files are accessible.
+LocalStorage for Session: Stores user data (username, role, loginTime) in localStorage for persistence across refreshes, synchronized via userLoggedIn/userLoggedOut events.
 
-Demo Instructions
+Testing
 
-Local Demo:
-
-Start all micro-frontends (see their respective READMEs).
-Start the host app (npm start).
-Navigate to http://localhost:3000, click links to access remote modules.
-Test role-based access by logging in via /auth/login (sets role: admin).
-
-
-Deployed Demo:
-
-Deploy micro-frontends to Vercel/Netlify (see their READMEs).
-Update public/config.json with deployed URLs (e.g., https://auth-app.vercel.app/remoteEntry.js).
-Deploy host to Vercel (vercel --prod).
-Access the deployed host URL and verify module integration.
-
-
-
-Adding a New Module
-
-Create a new micro-frontend repository (use auth-app as a template).
-Update public/config.json with the new module's scope, URL, components, routes, and permissions.
-No host rebuild is required; the new module loads dynamically.
+Local: Run npm start and test routes (/auth/login, /booking/list, /reporting/dashboard) with user and admin roles. Check console for moduleRegister logs.
+Production: Verify at https://micro-host-app.netlify.app. Ensure no 404 errors and charts render in /reporting/dashboard (admin-only).
+Dynamic Registration: Rename public/config.json to test self-registration. Routes should load via moduleRegister events.
