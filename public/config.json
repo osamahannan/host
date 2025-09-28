@@ -1,18 +1,18 @@
 {
   "auth": {
-    "url": "https://micro-auth-app.netlify.app/remoteEntry.js",
+    "url": "http://localhost:3001/remoteEntry.js",
     "components": ["Login", "UserProfile"],
     "routes": ["/auth/login", "/auth/profile"],
     "permissions": []
   },
   "booking": {
-    "url": "https://micro-booking.netlify.app/remoteEntry.js",
+    "url": "http://localhost:3002/remoteEntry.js",
     "components": ["BookingList", "BookingForm"],
     "routes": ["/booking/list", "/booking/form"],
     "permissions": ["user"]
   },
   "reporting": {
-    "url": "https://micro-reporting.netlify.app/remoteEntry.js",
+    "url": "http://localhost:3003/remoteEntry.js",
     "components": ["ReportDashboard"],
     "routes": ["/reporting/dashboard"],
     "permissions": ["admin"]

@@ -1,6 +1,7 @@
 import React, { Suspense, useEffect, useState, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import './styles.css';
+import { ModuleMetadata } from './shared-types';
 
 interface RemoteConfig {
   [key: string]: {
@@ -117,7 +118,6 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is already logged in
     const checkLoginStatus = () => {
       const savedUser = localStorage.getItem('user');
       if (savedUser) {
@@ -132,47 +132,60 @@ const App: React.FC = () => {
       setIsLoading(false);
     };
 
-    // Load config and check login status
-    Promise.all([
-      fetch('/config.json').then((res) => res.json()).catch(() => console.error('Config load failed')),
-      new Promise(resolve => setTimeout(resolve, 500)) // Small delay to show loading
-    ]).then(([configData]) => {
-      setConfig(configData || {});
-      checkLoginStatus();
-    });
+    fetch('/config.json')
+      .then((res) => res.json())
+      .then((configData) => {
+        setConfig(configData || {});
+        checkLoginStatus();
+      })
+      .catch(() => {
+        console.error('Config load failed, relying on dynamic registration');
+        checkLoginStatus();
+      });
+
+    const handleRegister = (e: Event) => {
+      const metadata = (e as CustomEvent<ModuleMetadata>).detail;
+      console.log('Module registered:', metadata);
+      setConfig((prev) => ({
+        ...prev,
+        [metadata.name]: {
+          url: metadata.url,
+          components: metadata.components,
+          routes: metadata.routes,
+          permissions: metadata.permissions,
+        },
+      }));
+    };
 
     const handleLogin = (e: Event) => {
       const detail = (e as CustomEvent).detail;
-      console.log("User logged in:", detail);
-      
-      // Save user data to localStorage
+      console.log('User logged in:', detail);
       localStorage.setItem('user', JSON.stringify({
         username: detail.username,
         role: detail.role,
-        loginTime: new Date().toISOString()
+        loginTime: new Date().toISOString(),
       }));
-      
       setUserRole(detail.role);
     };
 
     const handleLogout = () => {
-      console.log("User logged out");
+      console.log('User logged out');
       localStorage.removeItem('user');
       setUserRole(null);
-      // Redirect to home page after logout
       window.location.href = '/';
     };
 
+    window.addEventListener('moduleRegister', handleRegister);
     window.addEventListener('userLoggedIn', handleLogin);
     window.addEventListener('userLoggedOut', handleLogout);
 
     return () => {
+      window.removeEventListener('moduleRegister', handleRegister);
       window.removeEventListener('userLoggedIn', handleLogin);
       window.removeEventListener('userLoggedOut', handleLogout);
     };
   }, []);
 
-  // Show loading screen while checking login status
   if (isLoading) {
     return (
       <div className="app-container">
@@ -198,7 +211,7 @@ const App: React.FC = () => {
                 {userRole === 'admin' && (
                   <Link to="/reporting/dashboard" className="nav-link">📊 Reports</Link>
                 )}
-                <button 
+                <button
                   onClick={() => window.dispatchEvent(new CustomEvent('userLoggedOut'))}
                   className="nav-link logout-button"
                   style={{ border: 'none', cursor: 'pointer' }}
@@ -249,7 +262,7 @@ const App: React.FC = () => {
                   <div className="home-container">
                     <h1 className="home-title">Micro-Frontend Architecture</h1>
                     <p className="home-subtitle">
-                      A modern, scalable approach to building large-scale applications with independent, 
+                      A modern, scalable approach to building large-scale applications with independent,
                       deployable micro-frontends that work together seamlessly.
                     </p>
                     <div className="features-grid">
@@ -285,10 +298,8 @@ const App: React.FC = () => {
                     path={path}
                     element={
                       path.includes('/auth/login') ? (
-                        // Login page is always accessible
                         <RemoteComponent scope={scope} module={`./${components[idx]}`} url={url} />
                       ) : !userRole ? (
-                        // Redirect to login if not authenticated
                         <div className="error-container">
                           <h3 className="error-title">Authentication Required</h3>
                           <p className="error-message">Please log in to access this page.</p>
@@ -297,10 +308,8 @@ const App: React.FC = () => {
                           </Link>
                         </div>
                       ) : (permissions.length === 0 || permissions.includes(userRole) || userRole === 'admin') ? (
-                        // Check permissions for authenticated users
                         <RemoteComponent scope={scope} module={`./${components[idx]}`} url={url} />
                       ) : (
-                        // Access denied for insufficient permissions
                         <div className="error-container">
                           <h3 className="error-title">Access Denied</h3>
                           <p className="error-message">You don't have permission to access this module.</p>
