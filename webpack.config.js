@@ -16,7 +16,7 @@ module.exports = (env) => {
       static: path.resolve(__dirname, 'public'),
     },
     output: {
-      publicPath: isProduction ? '/' : 'auto',
+      publicPath: 'auto',
       path: path.resolve(__dirname, 'dist'),
     },
     resolve: {
