@@ -12,25 +12,29 @@ module.exports = (env) => {
     devServer: {
       port: 3000,
       headers: { 'Access-Control-Allow-Origin': '*' },
-      historyApiFallback: { index: '/index.html' },
+      historyApiFallback: { index: '/index.html', disableDotRule: true, },
       static: path.resolve(__dirname, 'public'),
     },
     output: {
-      publicPath: 'auto',
+      publicPath: '/',
       path: path.resolve(__dirname, 'dist'),
     },
     resolve: {
       extensions: ['.ts', '.tsx', '.js'],
     },
-    module: {
-      rules: [
-        {
-          test: /\.tsx?$/,
-          loader: 'ts-loader',
-          exclude: /node_modules/,
-        },
-      ],
-    },
+  module: {
+    rules: [
+      {
+        test: /\.tsx?$/,
+        loader: 'ts-loader',
+        exclude: /node_modules/,
+      },
+      {
+        test: /\.css$/,
+        use: ['style-loader', 'css-loader'],
+      },
+    ],
+  },
     plugins: [
       new ModuleFederationPlugin({
         name: 'host',
