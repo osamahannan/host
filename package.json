@@ -5,7 +5,7 @@
     "start": "webpack serve",
     "build": "webpack --env production",
     "predeploy": "npm run build",
-    "deploy": "vercel --prod"
+    "deploy": "netlify deploy --prod --dir=dist"
   },
   "dependencies": {
     "react": "^18.2.0",
